@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>问卷</title>
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif;margin:0;background:#f3f4f6;color:#111827;}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif;
+      margin:0;background:#f3f4f6;color:#111827;
+    }
     .wrap{max-width:1100px;margin:12px auto;padding:8px 12px;}
     .card{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 6px 16px rgba(15,23,42,.06);}
     .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -24,9 +27,61 @@
     .btn{border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;background:#111827;color:#fff;cursor:pointer;}
     .btn2{border:1px solid #e5e7eb;background:#fff;color:#111827;}
     .btn:disabled{background:#9ca3af;cursor:not-allowed;opacity:.85;}
-    .json{margin-top:10px;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;display:none;}
+    .json{
+      margin-top:10px;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;display:none;
+    }
+
+    /* ===== 背景信息（控制变量） ===== */
+    .form-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .form-grid{ grid-template-columns: 1fr; }
+    }
+    .field{
+      border:1px solid #e5e7eb;
+      border-radius:10px;
+      padding:10px 10px;
+      background:#fff;
+    }
+    .field label{
+      display:block;
+      font-size:12px;
+      color:#374151;
+      font-weight:600;
+      margin-bottom:6px;
+    }
+    .field input[type="number"],
+    .field select{
+      width:100%;
+      box-sizing:border-box;
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      padding:8px 10px;
+      font-size:13px;
+      outline:none;
+    }
+    .field .radio-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      font-size:13px;
+      color:#111827;
+    }
+    .field .hint{
+      font-size:11px;
+      color:#6b7280;
+      margin-top:6px;
+      line-height:1.4;
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="card">
@@ -41,6 +96,85 @@
       </p>
 
       <form id="surveyForm">
+        <!-- ========== 背景信息（控制变量） ========== -->
+        <div class="section" id="demoSection">
+          <h3>背景信息（用于统计控制）</h3>
+
+          <div class="form-grid">
+            <!-- 性别 -->
+            <div class="field">
+              <label>性别</label>
+              <div class="radio-row">
+                <label><input type="radio" name="gender" value="male" required> 男</label>
+                <label><input type="radio" name="gender" value="female" required> 女</label>
+                <label><input type="radio" name="gender" value="other" required> 其他/不便说明</label>
+              </div>
+            </div>
+
+            <!-- 年龄 -->
+            <div class="field">
+              <label for="age">年龄</label>
+              <input id="age" name="age" type="number" min="16" max="99" step="1" required placeholder="例如：24">
+              <div class="hint">请输入你的实际年龄（16–99）。</div>
+            </div>
+
+            <!-- 最高学历 -->
+            <div class="field">
+              <label for="edu">最高学历</label>
+              <select id="edu" name="education" required>
+                <option value="" disabled selected>请选择</option>
+                <option value="highschool_or_below">高中及以下</option>
+                <option value="associate">大专</option>
+                <option value="bachelor">本科</option>
+                <option value="master">硕士</option>
+                <option value="phd">博士及以上</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+
+            <!-- 购物时间 -->
+            <div class="field">
+              <label for="shop_time">日常网购决策/浏览时长</label>
+              <select id="shop_time" name="shopping_time" required>
+                <option value="" disabled selected>请选择</option>
+                <option value="lt5">5 分钟以内</option>
+                <option value="5_10">5–10 分钟</option>
+                <option value="11_20">11–20 分钟</option>
+                <option value="21_30">21–30 分钟</option>
+                <option value="gt30">30 分钟以上</option>
+              </select>
+              <div class="hint">指你在类似商品上通常用于查看信息、比较、做决定的时间。</div>
+            </div>
+
+            <!-- AI 使用频率 -->
+            <div class="field">
+              <label for="ai_freq">AI 使用经验（过去 3 个月使用频率）</label>
+              <select id="ai_freq" name="ai_use_freq" required>
+                <option value="" disabled selected>请选择</option>
+                <option value="never">从不</option>
+                <option value="rarely">很少（每月 1–2 次）</option>
+                <option value="sometimes">偶尔（每周 1–2 次）</option>
+                <option value="often">经常（每周 3–5 次）</option>
+                <option value="very_often">非常频繁（几乎每天）</option>
+              </select>
+            </div>
+
+            <!-- AI 熟练度 -->
+            <div class="field">
+              <label for="ai_skill">AI 使用熟练度（自评）</label>
+              <select id="ai_skill" name="ai_skill" required>
+                <option value="" disabled selected>请选择</option>
+                <option value="1">1 = 非常不熟练</option>
+                <option value="2">2</option>
+                <option value="3">3 = 一般</option>
+                <option value="4">4</option>
+                <option value="5">5 = 非常熟练</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Likert 量表容器 -->
         <div id="surveyContainer"></div>
 
         <div class="btnrow">
@@ -53,12 +187,30 @@
     </div>
   </div>
 
+  <!-- exp_common.js 需要和本文件位于同一目录 -->
   <script src="exp_common.js"></script>
   <script>
     // ===（可选）如果你有后端，填入接口；否则保持 null
     const SUBMIT_ENDPOINT = null; // 例如 "https://your-domain.com/submit"
 
-    const ctx = Exp.getContextForSurvey();
+    function fallbackCtx() {
+      return {
+        participant_id: sessionStorage.getItem("participant_id"),
+        condition: sessionStorage.getItem("exp_condition") || (JSON.parse(sessionStorage.getItem("final_state") || "{}").condition || null),
+        condition_url: sessionStorage.getItem("exp_condition_url"),
+        task_start_ts: sessionStorage.getItem("task_start_ts"),
+        task_end_ts: sessionStorage.getItem("task_end_ts"),
+        interactionLog: JSON.parse(sessionStorage.getItem("interactionLog") || "[]"),
+        final_state: JSON.parse(sessionStorage.getItem("final_state") || "{}"),
+        page_extra: JSON.parse(sessionStorage.getItem("page_extra") || "{}"),
+      };
+    }
+
+    const ctx = (window.Exp && typeof Exp.getContextForSurvey === "function")
+      ? Exp.getContextForSurvey()
+      : fallbackCtx();
+
+    // 如果你入口页不是 start.html，请把这里改成 start1.html
     if (!ctx.participant_id || !ctx.condition) {
       window.location.replace("start.html");
     }
@@ -66,7 +218,7 @@
     const surveySpec = [
       {
         id: "pc",
-        title: "请根据你刚才使用页面的体验作答。所有题目为 5 点量表（1=非常不同意，5=非常同意）。",
+        title: "感知控制",
         scaleMax: 5,
         left: "非常不同意",
         right: "非常同意",
@@ -78,7 +230,7 @@
       },
       {
         id: "int",
-        title: "请根据你刚才使用页面的体验作答。所有题目为 5 点量表（1=非常不同意，5=非常同意）。",
+        title: "AI 评论摘要的可交互性",
         scaleMax: 5,
         left: "非常不同意",
         right: "非常同意",
@@ -91,7 +243,7 @@
       },
       {
         id: "cx",
-        title: "请根据你刚才使用页面的体验作答。所有题目为 5 点量表（1=非常不同意，5=非常同意）。",
+        title: "感知复杂度",
         scaleMax: 5,
         left: "非常不同意",
         right: "非常同意",
@@ -104,7 +256,7 @@
       },
       {
         id: "tp",
-        title: "请根据你刚才使用页面的体验作答。所有题目为 5 点量表（1=非常不同意，5=非常同意）。",
+        title: "时间压力",
         scaleMax: 5,
         left: "非常不同意",
         right: "非常同意",
@@ -196,6 +348,24 @@
       return out;
     }
 
+    function getDemographics() {
+      const genderEl = document.querySelector('input[name="gender"]:checked');
+      const ageEl = document.querySelector('input[name="age"]');
+      const eduEl = document.querySelector('select[name="education"]');
+      const shopEl = document.querySelector('select[name="shopping_time"]');
+      const aiFreqEl = document.querySelector('select[name="ai_use_freq"]');
+      const aiSkillEl = document.querySelector('select[name="ai_skill"]');
+
+      return {
+        gender: genderEl ? genderEl.value : null,
+        age: ageEl && ageEl.value ? Number(ageEl.value) : null,
+        education: eduEl ? eduEl.value : null,
+        shopping_time: shopEl ? shopEl.value : null,
+        ai_use_freq: aiFreqEl ? aiFreqEl.value : null,
+        ai_skill: aiSkillEl && aiSkillEl.value ? Number(aiSkillEl.value) : null
+      };
+    }
+
     function downloadJSON(obj) {
       const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -212,11 +382,17 @@
 
     document.getElementById("restartBtn").addEventListener("click", () => {
       sessionStorage.clear();
-      window.location.replace("start.html");
+      window.location.replace("start.html"); // 若入口是 start1.html，请改这里
     });
 
     document.getElementById("surveyForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      // 原生 required 校验（包括背景信息）
+      if (!e.target.checkValidity()) {
+        e.target.reportValidity();
+        return;
+      }
 
       const payload = {
         participant_id: ctx.participant_id,
@@ -230,6 +406,7 @@
         final_state: ctx.final_state,
         interactionLog: ctx.interactionLog,
         page_extra: ctx.page_extra,
+        demographics: getDemographics(),     // ✅ 控制变量
         survey: getResponses(),
         meta: { userAgent: navigator.userAgent, language: navigator.language }
       };
@@ -253,7 +430,7 @@
         }
       }
 
-      // 无后端时，建议让研究者/被试下载（或你可改成平台回传）
+      // 无后端时：下载 JSON（用于本地收集/调试）
       downloadJSON(payload);
       alert("提交成功（已下载JSON；同时控制台与页面下方也显示了数据）。");
     });
