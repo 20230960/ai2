@@ -558,10 +558,23 @@
     // 下一步按钮行为（示例：打印日志；可替换为跳转/提交）
     if (nextBtn) {
       nextBtn.addEventListener("click", () => {
-        if (!hasInteracted) return;
-        console.log("Proceed to next step. interactionLog =", window.interactionLog);
-        // window.location.href = "next.html"; // 需要跳转时取消注释并替换链接
-      });
+  if (!hasInteracted) return;
+
+  // 1) 存储本页数据（供 survey.html 读取）
+  sessionStorage.setItem("task_end_ts", new Date().toISOString());
+  sessionStorage.setItem("interactionLog", JSON.stringify(window.interactionLog || []));
+  sessionStorage.setItem("final_state", JSON.stringify({
+    lengthLevel: state.lengthLevel,
+    selectedDimensions: Array.from(state.selectedDimensions)
+  }));
+
+  // 可选：如果你有条件编号（比如交互促销），也可以写入
+  // sessionStorage.setItem("exp_condition", "INTERACTIVE_NOPROMO");
+
+  // 2) 跳转到统一问卷页
+  window.location.href = "survey.html";
+});
+
     }
 
     // 初始渲染
