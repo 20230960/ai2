@@ -42,6 +42,29 @@
     .summary-meta .count{font-style:italic;}
 
     .footer-note{margin-top:12px;font-size:12px;color:#6b7280;line-height:1.5;}
+
+    /* ✅ 下一步按钮区 */
+    .next-wrapper{
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .next-hint{
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .next-btn{
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #111827;
+      color: #ffffff;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -89,8 +112,7 @@
       <!-- 右侧：固定摘要（中等长度，无交互） -->
       <div class="card">
         <div class="card-header">
-          <span>AI 评论摘要
-         </span>
+          <span>AI 评论摘要</span>
         </div>
 
         <div class="summary-box" id="summaryText">
@@ -114,6 +136,42 @@
     <div class="footer-note">
       提示：本页面为非交互版本，仅展示固定的“中等长度”AI 评论摘要。
     </div>
+
+    <!-- ✅ 下一步：进入统一问卷 survey.html -->
+    <div class="next-wrapper">
+      <div class="next-hint">阅读完成后，请点击“下一步”进入问卷。</div>
+      <button class="next-btn" id="nextBtn">下一步</button>
+    </div>
   </div>
+
+  <script>
+    // 非交互页：无交互日志
+    const interactionLog = [];
+
+    // 非交互页的最终状态（供 survey.html 读取/记录）
+    const finalState = {
+      condition: "STATIC_NOPROMO", // 你可按需要改为 STATIC_PROMO 等
+      lengthLevel: 2,
+      selectedDimensions: ["quality", "battery", "comfort", "design", "service"],
+      interactive: false,
+      promo: false
+    };
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      // 可选：记录结束时间
+      sessionStorage.setItem("task_end_ts", new Date().toISOString());
+
+      // 保存数据（供 survey.html 读取）
+      sessionStorage.setItem("interactionLog", JSON.stringify(interactionLog));
+      sessionStorage.setItem("final_state", JSON.stringify(finalState));
+
+      // 如果你有被试ID/入口页选择条件，也可在入口页写入 participant_id / exp_condition
+      // 这里不强制生成，避免覆盖入口页的分配
+      // if (!sessionStorage.getItem("participant_id")) sessionStorage.setItem("participant_id", "P" + Date.now());
+
+      // 跳转到统一问卷页（确保仓库里存在 survey.html）
+      window.location.href = "survey.html";
+    });
+  </script>
 </body>
 </html>
