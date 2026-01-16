@@ -587,15 +587,23 @@
     // 下一步按钮行为（请按你的问卷平台替换）
     if (nextBtn) {
       nextBtn.addEventListener("click", () => {
-        if (!hasInteracted) return;
+  if (!hasInteracted) return;
 
-        // 示例1：跳转到下一页（把 next.html 换成你的真实链接）
-        // window.location.href = "next.html";
+  // 1) 存储本页数据（供 survey.html 读取）
+  sessionStorage.setItem("task_end_ts", new Date().toISOString());
+  sessionStorage.setItem("interactionLog", JSON.stringify(window.interactionLog || []));
+  sessionStorage.setItem("final_state", JSON.stringify({
+    lengthLevel: state.lengthLevel,
+    selectedDimensions: Array.from(state.selectedDimensions)
+  }));
 
-        // 示例2：仅打印日志（用于调试）
-        console.log("Next clicked. interactionLog =", window.interactionLog);
-        alert("已满足交互要求：可以进入下一步（请在此处接入你的问卷“下一题/下一页”逻辑）。");
-      });
+  // 可选：如果你有条件编号（比如交互促销），也可以写入
+  // sessionStorage.setItem("exp_condition", "INTERACTIVE_NOPROMO");
+
+  // 2) 跳转到统一问卷页
+  window.location.href = "survey.html";
+});
+
     }
 
     // 初始渲染
