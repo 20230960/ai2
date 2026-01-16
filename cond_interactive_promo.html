@@ -588,21 +588,9 @@
     if (nextBtn) {
       nextBtn.addEventListener("click", () => {
   if (!hasInteracted) return;
-
-  // 1) 存储本页数据（供 survey.html 读取）
-  sessionStorage.setItem("task_end_ts", new Date().toISOString());
-  sessionStorage.setItem("interactionLog", JSON.stringify(window.interactionLog || []));
-  sessionStorage.setItem("final_state", JSON.stringify({
-    lengthLevel: state.lengthLevel,
-    selectedDimensions: Array.from(state.selectedDimensions)
-  }));
-
-  // 可选：如果你有条件编号（比如交互促销），也可以写入
-  // sessionStorage.setItem("exp_condition", "INTERACTIVE_NOPROMO");
-
-  // 2) 跳转到统一问卷页
   window.location.href = "survey.html";
 });
+
 
     }
 
