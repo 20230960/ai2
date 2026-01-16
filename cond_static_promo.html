@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>商品评论评估任务（非交互版）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* ========== 基本布局（留白压缩版） ========== */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+
+    .page-wrapper {
+      max-width: 1100px;
+      margin: 12px auto;
+      padding: 8px 12px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 2px 0;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .card-header {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header span.badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background-color: #eef2ff;
+      color: #4338ca;
+    }
+
+    /* ========== 商品信息区 ========== */
+    .product-wrapper {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .product-image {
+      width: 110px;
+      height: 110px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+    }
+
+    .product-meta h2 {
+      font-size: 16px;
+      margin: 0 0 4px 0;
+    }
+
+    .product-meta .brand {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .rating-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .stars {
+      color: #fbbf24;
+      letter-spacing: 1px;
+    }
+
+    .price-row {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .price-row span.old {
+      font-size: 12px;
+      color: #9ca3af;
+      text-decoration: line-through;
+      margin-left: 6px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    .pill-green {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
+    .pill-blue {
+      background-color: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .product-copy {
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    /* ========== 促销倒计时区 ========== */
+    .promo-timer-wrapper {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+      margin-bottom: 12px;
+    }
+
+    .promo-timer {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ef4444;
+    }
+
+    /* ========== 摘要显示区（固定展示） ========== */
+    .summary-box {
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      background-color: #ffffff;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .summary-box p { margin: 3px 0; }
+    .summary-box p strong { color: #111827; }
+
+    .summary-meta {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-meta span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background-color: #22c55e;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .summary-meta .source {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .summary-meta .count { font-style: italic; }
+
+    /* ========== 底部说明 ========== */
+    .footer-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    code {
+      font-size: 11px;
+      background-color: #e5e7eb;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page-wrapper">
+    <h1>商品评论评估任务</h1>
+    <div class="subtitle">
+      请阅读下方商品信息和 <strong>AI 生成的评论摘要</strong>，并根据你的判断完成后续问卷。本页面为实验界面原型，仅用于研究目的。
+    </div>
+
+    <div class="layout">
+      <!-- 左侧：商品信息与倒计时 -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span>商品信息</span>
+            <span class="badge">模拟页面 · 仅用于实验</span>
+          </div>
+
+          <div class="product-wrapper">
+            <div class="product-image">🎧</div>
+            <div class="product-meta">
+              <h2>NovaSound AirLite 无线头戴式耳机</h2>
+              <div class="brand">品牌：NovaSound · 类型：无线头戴式耳机</div>
+              <div class="rating-row">
+                <span class="stars">★★★★★</span>
+                <span>4.6 / 5 · 共 256 条评分</span>
+              </div>
+              <div class="price-row">
+                <span id="currentPrice">￥599</span>
+                <span id="originalPrice" class="old">￥799</span>
+              </div>
+
+              <div class="tag-row">
+                <span class="pill pill-green">7 天无理由退货</span>
+                <span class="pill pill-blue">支持 AI 评论摘要</span>
+                <span class="pill">蓝牙 5.3</span>
+                <span class="pill">续航最长约 40 小时</span>
+              </div>
+
+              <div class="product-copy">
+                这款无线头戴式耳机适合日常通勤、学习和办公场景使用。下方展示了基于顾客真实评价生成的
+                AI 评论摘要，帮助你快速了解其他购买者对该商品的看法。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 促销倒计时 -->
+        <div class="promo-timer-wrapper card">
+          <div class="card-header">
+            <span>促销倒计时</span>
+          </div>
+          <div class="promo-timer">
+            <p id="countdownTimer" style="font-size: 18px; font-weight: bold;">00:00:10</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：固定 AI 摘要（中等长度，无交互控件） -->
+      <div class="card">
+        <div class="card-header">
+          <span>AI 评论摘要
+          </span>
+        </div>
+
+        <div class="summary-box" id="summaryText">
+          <p><strong>音质：</strong> 许多顾客认为这款耳机的整体音质清晰、均衡，足以满足日常听歌、追剧和线上会议的需要。部分用户表示，与价格更高的品牌相比，这款耳机的低频有力度但不过分抢戏，人声表现自然，人声和背景乐的分离度比较好。</p>
+          <p><strong>续航：</strong> 大多数用户反馈电池续航可以轻松应对通勤和日常办公，一般使用一两天不需要充电。不少评论提到，中等强度使用（每天 2–3 小时听歌或开会）时，一次充电可以使用好几天。</p>
+          <p><strong>佩戴舒适度：</strong> 用户普遍认为耳机整体重量较轻，夹头感不强，长时间佩戴也比较舒适。很多评论特别提到耳罩比较柔软，头梁可调节范围较大，可以适应不同头型和头围。</p>
+          <p><strong>外观与做工：</strong> 整体外观偏简约商务风，颜色低调，不会在办公室或图书馆显得突兀。不少用户喜欢它的哑光质感，认为相比高亮塑料更不容易留下指纹和划痕，看起来更加耐用。</p>
+          <p><strong>客服与物流：</strong> 整体来看，用户对物流速度和包装保护的评价较为正面，普遍认为发货及时、包装稳妥。部分评论提到，如果出现质量问题或个人不满意，退换货流程相对顺畅，客服响应还算及时。</p>
+        </div>
+
+        <div class="summary-meta">
+          <div class="source">
+            <span class="dot"></span>
+            <span>基于 256 条顾客评论生成的 AI 摘要</span>
+          </div>
+          <div class="count">中等长度 · 约 10 句 · 5 个维度</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      实验提示：本页面为<strong>非交互版本</strong>，仅展示固定的“中等长度”AI 评论摘要；不记录交互日志。
+    </div>
+  </div>
+
+  <script>
+    // ========== 促销倒计时逻辑 ==========
+    function startCountdown(durationInSeconds) {
+      let timer = durationInSeconds;
+      const countdownDisplay = document.getElementById('countdownTimer');
+
+      const interval = setInterval(function () {
+        const hours = Math.floor(timer / 3600);
+        const minutes = Math.floor((timer % 3600) / 60);
+        const seconds = timer % 60;
+
+        countdownDisplay.textContent =
+          `${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+
+        if (timer <= 0) {
+          clearInterval(interval);
+          countdownDisplay.textContent = '促销结束';
+
+          // 修改价格显示为原价
+          document.getElementById('currentPrice').textContent = '￥799';
+          document.getElementById('originalPrice').style.display = 'none';
+        } else {
+          timer--;
+        }
+      }, 1000);
+    }
+
+    // 启动倒计时（这里 10 秒演示；正式实验可改为 180/300 等）
+    startCountdown(10);
+  </script>
+</body>
+</html>

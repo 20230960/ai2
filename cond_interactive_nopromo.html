@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>商品评论评估任务</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* ========== 基本布局（留白压缩版） ========== */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+
+    .page-wrapper {
+      max-width: 1100px;
+      margin: 12px auto;
+      padding: 8px 12px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 2px 0;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.2fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .card-header {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header span.badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background-color: #eef2ff;
+      color: #4338ca;
+    }
+
+    /* ========== 商品信息区 ========== */
+    .product-wrapper {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .product-image {
+      width: 110px;
+      height: 110px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+    }
+
+    .product-meta h2 {
+      font-size: 16px;
+      margin: 0 0 4px 0;
+    }
+
+    .product-meta .brand {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .rating-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .stars {
+      color: #fbbf24;
+      letter-spacing: 1px;
+    }
+
+    .price-row {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .price-row span.old {
+      font-size: 12px;
+      color: #9ca3af;
+      text-decoration: line-through;
+      margin-left: 6px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    .pill-green {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+
+    .pill-blue {
+      background-color: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .product-copy {
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    /* ========== 控件区 ========== */
+    .controls-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .control-group {
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 6px 8px;
+      background-color: #f9fafb;
+    }
+
+    .control-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-title span.sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: #6b7280;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .slider-row input[type="range"] { flex: 1; }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .dimensions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .dimensions-row label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .dimensions-row input[type="checkbox"] { margin: 0; }
+
+    /* ========== 摘要显示区 ========== */
+    .summary-box {
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      background-color: #ffffff;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .summary-box p { margin: 3px 0; }
+    .summary-box p strong { color: #111827; }
+
+    .summary-meta {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-meta span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background-color: #22c55e;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .summary-meta .source {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .summary-meta .count { font-style: italic; }
+
+    /* ========== 底部说明 ========== */
+    .footer-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    code {
+      font-size: 11px;
+      background-color: #e5e7eb;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    /* ========== 下一步门槛区 ========== */
+    .next-wrapper{
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .next-hint{
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .next-btn{
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #111827;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .next-btn:disabled{
+      background: #9ca3af;
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page-wrapper">
+    <h1>商品评论评估任务</h1>
+    <div class="subtitle">
+      请阅读下方商品信息和 <strong>AI 生成的评论摘要</strong>，并根据你的判断完成后续问卷。本页面为实验界面原型，仅用于研究目的。
+    </div>
+
+    <div class="layout">
+      <!-- 左侧：商品信息 -->
+      <div class="card">
+        <div class="card-header">
+          <span>商品信息</span>
+          <span class="badge">模拟页面 · 仅用于实验</span>
+        </div>
+
+        <div class="product-wrapper">
+          <div class="product-image">🎧</div>
+          <div class="product-meta">
+            <h2>NovaSound AirLite 无线头戴式耳机</h2>
+            <div class="brand">品牌：NovaSound · 类型：无线头戴式耳机</div>
+
+            <div class="rating-row">
+              <span class="stars">★★★★★</span>
+              <span>4.6 / 5 · 共 256 条评分</span>
+            </div>
+
+            <div class="price-row">
+              ￥599 <span class="old">￥799</span>
+            </div>
+
+            <div class="tag-row">
+              <span class="pill pill-green">7 天无理由退货</span>
+              <span class="pill pill-blue">支持 AI 评论摘要</span>
+              <span class="pill">蓝牙 5.3</span>
+              <span class="pill">续航最长约 40 小时</span>
+            </div>
+
+            <div class="product-copy">
+              这款无线头戴式耳机适合日常通勤、学习和办公场景使用。下方展示了基于顾客真实评价生成的
+              AI 评论摘要，帮助你快速了解其他购买者对该商品的看法。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：AI 摘要与交互控件 -->
+      <div class="card">
+        <div class="card-header">
+          <span>交互式 AI 评论摘要</span>
+        </div>
+
+        <div class="controls-wrapper">
+          <!-- 摘要长度 -->
+          <div class="control-group">
+            <div class="control-title">
+              摘要长度
+              <span class="sub" id="lengthLabelText">（中等）</span>
+            </div>
+            <div class="slider-row">
+              <span style="font-size:11px;">短</span>
+              <input type="range" id="lengthSlider" min="1" max="3" value="2" />
+              <span style="font-size:11px;">长</span>
+            </div>
+            <div class="slider-labels">
+              <span>1 = 简短</span>
+              <span>2 = 中等</span>
+              <span>3 = 较长</span>
+            </div>
+          </div>
+
+          <!-- 关注维度 -->
+          <div class="control-group">
+            <div class="control-title">
+              关注维度
+              <span class="sub">请选择你希望在摘要中优先看到的评价方面</span>
+            </div>
+            <div class="dimensions-row">
+              <label><input type="checkbox" value="quality" checked /><span>音质</span></label>
+              <label><input type="checkbox" value="battery" checked /><span>续航</span></label>
+              <label><input type="checkbox" value="comfort" checked /><span>佩戴舒适度</span></label>
+              <label><input type="checkbox" value="design" checked /><span>外观与做工</span></label>
+              <label><input type="checkbox" value="service" checked /><span>客服与物流</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 摘要显示框 -->
+        <div class="summary-box" id="summaryText"></div>
+
+        <div class="summary-meta">
+          <div class="source">
+            <span class="dot"></span>
+            <span id="sourceLabel">基于 256 条顾客评论生成的 AI 摘要</span>
+          </div>
+          <div class="count" id="lengthMeta">约 0 句 · 已选择 0 个维度</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      实验提示：本页面会将你的所有交互（拖动滑条、勾选维度）记录在
+      <code>window.interactionLog</code>
+      中（可在浏览器控制台查看），用于后续数据分析。
+    </div>
+
+    <!-- ✅ 下一步按钮（互动一次后解锁） -->
+    <div class="next-wrapper">
+      <div class="next-hint" id="nextHint">请先进行至少一次交互（调整摘要长度或勾选维度）后再继续。</div>
+      <button class="next-btn" id="nextBtn" disabled>下一步</button>
+    </div>
+  </div>
+
+  <script>
+    // ========== 维度标签（中文） ==========
+    const dimensionLabels = {
+      quality: "音质",
+      battery: "续航",
+      comfort: "佩戴舒适度",
+      design: "外观与做工",
+      service: "客服与物流",
+    };
+
+    // 每个维度下预置三层细节（短/中/长）
+    const summaryData = {
+      quality: [
+        "许多顾客认为这款耳机的整体音质清晰、均衡，足以满足日常听歌、追剧和线上会议的需要。",
+        "部分用户表示，与价格更高的品牌相比，这款耳机的低频有力度但不过分抢戏，人声表现自然，人声和背景乐的分离度比较好。",
+        "少数对音质较敏感的用户提到，虽然谈不上“发烧级”，但在不同音乐类型（流行、摇滚、古典）以及视频通话场景下表现都超出预期。"
+      ],
+      battery: [
+        "大多数用户反馈电池续航可以轻松应对通勤和日常办公，一般使用一两天不需要充电。",
+        "不少评论提到，中等强度使用（每天 2–3 小时听歌或开会）时，一次充电可以使用好几天。",
+        "重度使用者普遍报告约 30–35 小时的连续播放时间，并认为快充功能在短时间补电时非常实用，比如出门前临时充电十几分钟即可应付一整段通勤。"
+      ],
+      comfort: [
+        "用户普遍认为耳机整体重量较轻，夹头感不强，长时间佩戴也比较舒适。",
+        "很多评论特别提到耳罩比较柔软，头梁可调节范围较大，可以适应不同头型和头围。",
+        "少部分佩戴眼镜的用户提到，连续使用数小时后耳朵会略有压迫感，但大多数人认为这属于可以接受的范围，并非明显缺点。"
+      ],
+      design: [
+        "整体外观偏简约商务风，颜色低调，不会在办公室或图书馆显得突兀。",
+        "不少用户喜欢它的哑光质感，认为相比高亮塑料更不容易留下指纹和划痕，看起来更加耐用。",
+        "有用户希望耳机可以完全折叠以便出行携带，但大多数人对随机附送的收纳袋和整体做工仍表示满意，觉得细节比较扎实。"
+      ],
+      service: [
+        "整体来看，用户对物流速度和包装保护的评价较为正面，普遍认为发货及时、包装稳妥。",
+        "部分评论提到，如果出现质量问题或个人不满意，退换货流程相对顺畅，客服响应还算及时。",
+        "也有个别用户提到，在咨询较为细致的问题时客服回复略慢，但总体上大家对售后服务态度和解决效率持肯定评价。"
+      ],
+    };
+
+    const lengthLabels = { 1: "简短", 2: "中等", 3: "较长" };
+
+    // ========== 状态与交互记录 ==========
+    const state = {
+      lengthLevel: 2,
+      selectedDimensions: new Set(["quality", "battery", "comfort", "design", "service"]),
+    };
+
+    // 用于实验数据收集：记录所有交互事件
+    window.interactionLog = [];
+
+    function logInteraction(type, payload) {
+      window.interactionLog.push({
+        type,
+        payload,
+        ts: new Date().toISOString(),
+      });
+      console.log("[INTERACTION]", type, payload);
+    }
+
+    // ========== DOM 元素引用 ==========
+    const summaryBox = document.getElementById("summaryText");
+    const lengthSlider = document.getElementById("lengthSlider");
+    const lengthLabelText = document.getElementById("lengthLabelText");
+    const lengthMeta = document.getElementById("lengthMeta");
+    const sourceLabel = document.getElementById("sourceLabel");
+    const dimensionCheckboxes = document.querySelectorAll(".dimensions-row input[type='checkbox']");
+
+    // 下一步门槛控件
+    const nextBtn = document.getElementById("nextBtn");
+    const nextHint = document.getElementById("nextHint");
+    let hasInteracted = false;
+
+    function unlockNext() {
+      if (hasInteracted) return;
+      hasInteracted = true;
+      if (nextBtn) nextBtn.disabled = false;
+      if (nextHint) nextHint.textContent = "已完成交互，可以继续。";
+    }
+
+    // ========== 渲染摘要核心函数 ==========
+    function renderSummary() {
+      const level = state.lengthLevel;
+      const dims = Array.from(state.selectedDimensions);
+
+      // 更新长度标签和来源说明
+      const label = lengthLabels[level];
+      lengthLabelText.textContent = `（${label}）`;
+      sourceLabel.textContent = "基于 256 条顾客评论生成的 AI 摘要";
+
+      if (dims.length === 0) {
+        summaryBox.innerHTML = "<em>请先在上方勾选至少一个关注维度，以生成摘要内容。</em>";
+        lengthMeta.textContent = "约 0 句 · 已选择 0 个维度";
+        return;
+      }
+
+      const paragraphs = [];
+      let totalSentences = 0;
+
+      dims.forEach((dim) => {
+        const textArr = summaryData[dim];
+        if (!textArr) return;
+        const sentences = textArr.slice(0, level);
+        totalSentences += sentences.length;
+        const dimLabel = dimensionLabels[dim];
+        paragraphs.push(`<p><strong>${dimLabel}：</strong> ${sentences.join(" ")}</p>`);
+      });
+
+      summaryBox.innerHTML = paragraphs.join("");
+      lengthMeta.textContent = `约 ${totalSentences} 句 · 已选择 ${dims.length} 个维度`;
+    }
+
+    // ========== 事件绑定 ==========
+    // 长度滑条
+    lengthSlider.addEventListener("input", (e) => {
+      unlockNext(); // ✅ 任意一次交互立即解锁
+      const newVal = parseInt(e.target.value, 10);
+      state.lengthLevel = newVal;
+      logInteraction("change_length", { lengthLevel: newVal });
+      renderSummary();
+    });
+
+    // 维度勾选
+    dimensionCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", (e) => {
+        unlockNext(); // ✅ 任意一次交互立即解锁
+        const dim = e.target.value;
+        if (e.target.checked) state.selectedDimensions.add(dim);
+        else state.selectedDimensions.delete(dim);
+
+        logInteraction("toggle_dimension", { dimension: dim, checked: e.target.checked });
+        renderSummary();
+      });
+    });
+
+    // 下一步按钮行为（示例：打印日志；可替换为跳转/提交）
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        if (!hasInteracted) return;
+        console.log("Proceed to next step. interactionLog =", window.interactionLog);
+        // window.location.href = "next.html"; // 需要跳转时取消注释并替换链接
+      });
+    }
+
+    // 初始渲染
+    renderSummary();
+  </script>
+</body>
+</html>

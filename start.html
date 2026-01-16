@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Experiment Start</title>
+</head>
+<body>
+<script>
+  // 四个条件页文件名（与你目录里的文件名保持一致）
+  const CONDITIONS = [
+    { id: "STATIC_PROMO",       url: "cond_static_promo.html" },
+    { id: "STATIC_NOPROMO",     url: "cond_static_nopromo.html" },
+    { id: "INTERACTIVE_PROMO",  url: "cond_interactive_promo.html" },
+    { id: "INTERACTIVE_NOPROMO",url: "cond_interactive_nopromo.html" }
+  ];
+
+  function genPid() {
+    return "P" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7).toUpperCase();
+  }
+
+  function pickRandom(arr) {
+    // 更稳的随机：crypto
+    const u = new Uint32Array(1);
+    crypto.getRandomValues(u);
+    return arr[u[0] % arr.length];
+  }
+
+  // 如果已经分配过（同一标签页会话），直接回到该条件页，避免刷新导致重新随机
+  const existingCond = sessionStorage.getItem("exp_condition");
+  const existingUrl  = sessionStorage.getItem("exp_condition_url");
+
+  if (existingCond && existingUrl) {
+    window.location.replace(existingUrl);
+  } else {
+    const picked = pickRandom(CONDITIONS);
+
+    sessionStorage.setItem("participant_id", genPid());
+    sessionStorage.setItem("exp_condition", picked.id);
+    sessionStorage.setItem("exp_condition_url", picked.url);
+    sessionStorage.setItem("task_start_ts", new Date().toISOString());
+
+    // 预置存储
+    sessionStorage.setItem("interactionLog", JSON.stringify([]));
+    sessionStorage.setItem("final_state", JSON.stringify({}));
+
+    window.location.replace(picked.url);
+  }
+</script>
+</body>
+</html>

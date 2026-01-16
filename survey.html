@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>问卷</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif;margin:0;background:#f3f4f6;color:#111827;}
+    .wrap{max-width:1100px;margin:12px auto;padding:8px 12px;}
+    .card{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 6px 16px rgba(15,23,42,.06);}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .badge{font-size:11px;padding:2px 7px;border-radius:999px;background:#eef2ff;color:#4338ca;}
+    h1{font-size:18px;margin:0 0 6px 0;}
+    .inst{font-size:13px;color:#6b7280;line-height:1.5;margin:0 0 10px 0;}
+    .section{margin-top:14px;padding-top:10px;border-top:1px solid #f3f4f6;}
+    .section h3{margin:0 0 8px 0;font-size:14px;}
+    table{width:100%;border-collapse:collapse;table-layout:fixed;}
+    th,td{border:1px solid #e5e7eb;padding:8px 6px;font-size:12px;vertical-align:middle;}
+    th{background:#f9fafb;font-weight:600;color:#374151;}
+    .item{width:48%;font-size:12.5px;line-height:1.4;}
+    .c{text-align:center;}
+    .anchors{display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-top:6px;}
+    .btnrow{margin-top:12px;display:flex;justify-content:flex-end;gap:10px;}
+    .btn{border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;background:#111827;color:#fff;cursor:pointer;}
+    .btn2{border:1px solid #e5e7eb;background:#fff;color:#111827;}
+    .btn:disabled{background:#9ca3af;cursor:not-allowed;opacity:.85;}
+    .json{margin-top:10px;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;display:none;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <span>问卷</span>
+        <span class="badge">统一问卷页</span>
+      </div>
+
+      <h1>请完成以下问卷</h1>
+      <p class="inst">
+        请根据你刚才使用页面的体验作答。除“时间压力”外，其余题目为 7 点量表（1=非常不同意，7=非常同意）；时间压力为 5 点量表（1=非常不同意，5=非常同意）。
+      </p>
+
+      <form id="surveyForm">
+        <div id="surveyContainer"></div>
+
+        <div class="btnrow">
+          <button type="button" class="btn btn2" id="restartBtn">重新开始</button>
+          <button type="submit" class="btn" id="submitBtn">提交</button>
+        </div>
+
+        <div id="jsonBox" class="json"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="exp_common.js"></script>
+  <script>
+    // ===（可选）如果你有后端，填入接口；否则保持 null
+    const SUBMIT_ENDPOINT = null; // 例如 "https://your-domain.com/submit"
+
+    const ctx = Exp.getContextForSurvey();
+    if (!ctx.participant_id || !ctx.condition) {
+      window.location.replace("start.html");
+    }
+
+    const surveySpec = [
+      {
+        id: "pc",
+        title: "感知控制（Xiang & Chae, 2022）",
+        scaleMax: 7,
+        left: "非常不同意",
+        right: "非常同意",
+        items: [
+          "我可以自由选择在 AI 生成的评论摘要中查看哪些信息。",
+          "我觉得自己能够控制摘要的生成与呈现方式（例如，调整摘要长度或关注的评价维度）。",
+          "我能够将摘要输出引导到符合我需求的方向。"
+        ]
+      },
+      {
+        id: "int",
+        title: "AI 评论的可交互性",
+        scaleMax: 7,
+        left: "非常不同意",
+        right: "非常同意",
+        items: [
+          "当我调整设置（如摘要长度或关注重点）后，AI 生成的评论摘要会迅速更新。",
+          "AI 生成的评论摘要允许我以多种方式探索评论信息（例如按评价维度、按摘要长度）。",
+          "该摘要支持“输入—反馈—再调整”的迭代互动过程（我调整设置后，摘要会随之动态变化）。",
+          "与 AI 生成的评论摘要进行交互能让我持续关注商品信息。"
+        ]
+      },
+      {
+        id: "cx",
+        title: "感知复杂度（Thompson et al., 1991）",
+        scaleMax: 7,
+        left: "非常不同意",
+        right: "非常同意",
+        items: [
+          "调整 AI 评论摘要的设置会占用我较多时间，从而增加完成任务的负担。",
+          "这个 AI 摘要的交互操作很复杂，我很难理解系统是如何根据我的设置生成/更新摘要的。",
+          "为了得到我想要的摘要内容，我需要进行较多重复或机械性的操作（例如反复勾选维度、来回调整长度）。",
+          "为了达到我想要的摘要效果，我觉得过程有些麻烦、需要投入额外精力。"
+        ]
+      },
+      {
+        id: "tp",
+        title: "时间压力（Lin & Chen, 2013）",
+        scaleMax: 5,
+        left: "非常不同意",
+        right: "非常同意",
+        items: [
+          "为了按时完成本次商品评估任务，我必须加快速度。",
+          "我感到有压力需要快速完成对商品信息的评估。",
+          "我没有足够的时间去仔细阅读并评估 AI 生成的评论摘要。"
+        ]
+      }
+    ];
+
+    function renderSurvey() {
+      const container = document.getElementById("surveyContainer");
+      container.innerHTML = "";
+
+      surveySpec.forEach((block) => {
+        const sec = document.createElement("div");
+        sec.className = "section";
+
+        const h3 = document.createElement("h3");
+        h3.textContent = block.title;
+        sec.appendChild(h3);
+
+        const table = document.createElement("table");
+
+        // header
+        const thead = document.createElement("thead");
+        const hr = document.createElement("tr");
+        const thItem = document.createElement("th");
+        thItem.className = "item";
+        thItem.textContent = "题项";
+        hr.appendChild(thItem);
+
+        for (let i = 1; i <= block.scaleMax; i++) {
+          const th = document.createElement("th");
+          th.className = "c";
+          th.textContent = i;
+          hr.appendChild(th);
+        }
+        thead.appendChild(hr);
+        table.appendChild(thead);
+
+        // body
+        const tbody = document.createElement("tbody");
+        block.items.forEach((text, idx) => {
+          const tr = document.createElement("tr");
+          const tdText = document.createElement("td");
+          tdText.className = "item";
+          tdText.textContent = text;
+          tr.appendChild(tdText);
+
+          const name = `${block.id}_${idx + 1}`;
+          for (let v = 1; v <= block.scaleMax; v++) {
+            const td = document.createElement("td");
+            td.className = "c";
+            const input = document.createElement("input");
+            input.type = "radio";
+            input.name = name;
+            input.value = String(v);
+            input.required = true;
+            td.appendChild(input);
+            tr.appendChild(td);
+          }
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        sec.appendChild(table);
+
+        const anchors = document.createElement("div");
+        anchors.className = "anchors";
+        anchors.innerHTML = `<span>${block.left}</span><span>${block.right}</span>`;
+        sec.appendChild(anchors);
+
+        container.appendChild(sec);
+      });
+    }
+
+    function getResponses() {
+      const out = {};
+      surveySpec.forEach((block) => {
+        out[block.id] = {};
+        block.items.forEach((_, idx) => {
+          const name = `${block.id}_${idx + 1}`;
+          const checked = document.querySelector(`input[name="${name}"]:checked`);
+          out[block.id][name] = checked ? Number(checked.value) : null;
+        });
+      });
+      return out;
+    }
+
+    function downloadJSON(obj) {
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${ctx.participant_id || "participant"}_${ctx.condition || "cond"}_data.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    renderSurvey();
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      sessionStorage.clear();
+      window.location.replace("start.html");
+    });
+
+    document.getElementById("surveyForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        participant_id: ctx.participant_id,
+        condition: ctx.condition,
+        condition_url: ctx.condition_url,
+        timestamps: {
+          task_start_ts: ctx.task_start_ts,
+          task_end_ts: ctx.task_end_ts,
+          submit_ts: new Date().toISOString()
+        },
+        final_state: ctx.final_state,
+        interactionLog: ctx.interactionLog,
+        page_extra: ctx.page_extra,
+        survey: getResponses(),
+        meta: { userAgent: navigator.userAgent, language: navigator.language }
+      };
+
+      console.log("SUBMIT_PAYLOAD =", payload);
+
+      const box = document.getElementById("jsonBox");
+      box.style.display = "block";
+      box.textContent = JSON.stringify(payload, null, 2);
+
+      // 可选：上传到后端
+      if (SUBMIT_ENDPOINT) {
+        try {
+          await fetch(SUBMIT_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+        } catch (err) {
+          console.warn("Upload failed:", err);
+        }
+      }
+
+      // 无后端时，建议让研究者/被试下载（或你可改成平台回传）
+      downloadJSON(payload);
+      alert("提交成功（已下载JSON；同时控制台与页面下方也显示了数据）。");
+    });
+  </script>
+</body>
+</html>
