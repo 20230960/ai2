@@ -107,20 +107,15 @@
               <div class="radio-row">
                 <label><input type="radio" name="gender" value="male" required> 男</label>
                 <label><input type="radio" name="gender" value="female" required> 女</label>
-                
+                <label><input type="radio" name="gender" value="other" required> 其他/不便说明</label>
               </div>
             </div>
 
             <!-- 年龄 -->
             <div class="field">
               <label for="age">年龄</label>
-              <div class="radio-row">
-                <label><input type="radio" name="age" value="18-25" required> 18-25</label>
-                <label><input type="radio" name="age" value="26-35" required> 26-35</label>
-                <label><input type="radio" name="age" value="36-45" required> 36-45</label>
-                <label><input type="radio" name="age" value="46-55" required> 46-55</label>
-                
-              </div>
+              <input id="age" name="age" type="number" min="16" max="99" step="1" required placeholder="例如：24">
+              <div class="hint">请输入你的实际年龄（16–99）。</div>
             </div>
 
             <!-- 最高学历 -->
@@ -139,14 +134,14 @@
 
             <!-- 购物时间 -->
             <div class="field">
-              <label for="shop_time">使用在线购物平台的时长（年）</label>
+              <label for="shop_time">日常网购决策/浏览时长</label>
               <select id="shop_time" name="shopping_time" required>
                 <option value="" disabled selected>请选择</option>
-                <option value="2">2 年以内</option>
-                <option value="2-4">2-4 年</option>
-                <option value="4-6">4-6 年</option>
-                <option value="6-8">6-8 年</option>
-                <option value="8">8 年以上</option>
+                <option value="lt5">5 分钟以内</option>
+                <option value="5_10">5–10 分钟</option>
+                <option value="11_20">11–20 分钟</option>
+                <option value="21_30">21–30 分钟</option>
+                <option value="gt30">30 分钟以上</option>
               </select>
               <div class="hint">指你在类似商品上通常用于查看信息、比较、做决定的时间。</div>
             </div>
@@ -189,15 +184,21 @@
 
         <div id="jsonBox" class="json"></div>
       </form>
+
+      <!-- ✅ 隐藏提交通道：iframe + form（用于确认写入成功） -->
+      <iframe name="submitFrame" id="submitFrame" style="display:none;"></iframe>
+
+      <form id="postForm" target="submitFrame" method="post"
+            action="https://script.google.com/macros/s/AKfycbxtbadcIhotPE0R6EVae7Qsae1k5TZwizlqm2Tdi-4EXI5TmHkvvdPbs8y5U5JwgiX9/exec"
+            style="display:none;">
+        <input type="hidden" name="data" id="postData" value="">
+      </form>
     </div>
   </div>
 
   <!-- exp_common.js 需要和本文件位于同一目录 -->
   <script src="exp_common.js"></script>
   <script>
-    // ===（可选）如果你有后端，填入接口；否则保持 null
-    const SUBMIT_ENDPOINT = null; // 例如 "https://your-domain.com/submit"
-
     function fallbackCtx() {
       return {
         participant_id: sessionStorage.getItem("participant_id"),
@@ -371,16 +372,48 @@
       };
     }
 
-    function downloadJSON(obj) {
-      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${ctx.participant_id || "participant"}_${ctx.condition || "cond"}_data.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+    function genSubmissionId() {
+      return "S" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8).toUpperCase();
+    }
+
+    let pendingSubmissionId = null;
+
+    function submitToAppsScriptWithAck(payload) {
+      return new Promise((resolve, reject) => {
+        pendingSubmissionId = payload.submission_id;
+
+        const timer = setTimeout(() => {
+          pendingSubmissionId = null;
+          reject(new Error("timeout"));
+        }, 30000);
+
+        function onMessage(ev) {
+          const allowed = new Set([
+            "https://script.google.com",
+            "https://script.googleusercontent.com"
+          ]);
+          if (!allowed.has(ev.origin)) return;
+
+          const data = ev.data || {};
+          if (typeof data.ok === "undefined") return;
+
+          // 匹配本次提交
+          if (pendingSubmissionId && data.submission_id && data.submission_id !== pendingSubmissionId) return;
+
+          clearTimeout(timer);
+          window.removeEventListener("message", onMessage);
+          pendingSubmissionId = null;
+
+          if (data.ok) resolve(data);
+          else reject(new Error(data.error || "unknown_error"));
+        }
+
+        window.addEventListener("message", onMessage);
+
+        // 通过隐藏 form POST 发送
+        document.getElementById("postData").value = JSON.stringify(payload);
+        document.getElementById("postForm").submit();
+      });
     }
 
     renderSurvey();
@@ -393,13 +426,13 @@
     document.getElementById("surveyForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // 原生 required 校验（包括背景信息）
       if (!e.target.checkValidity()) {
         e.target.reportValidity();
         return;
       }
 
       const payload = {
+        submission_id: genSubmissionId(),
         participant_id: ctx.participant_id,
         condition: ctx.condition,
         condition_url: ctx.condition_url,
@@ -411,33 +444,29 @@
         final_state: ctx.final_state,
         interactionLog: ctx.interactionLog,
         page_extra: ctx.page_extra,
-        demographics: getDemographics(),     // ✅ 控制变量
+        demographics: getDemographics(),
         survey: getResponses(),
         meta: { userAgent: navigator.userAgent, language: navigator.language }
       };
 
-      console.log("SUBMIT_PAYLOAD =", payload);
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
 
+      // 可选：显示 payload（调试用）
       const box = document.getElementById("jsonBox");
       box.style.display = "block";
       box.textContent = JSON.stringify(payload, null, 2);
 
-      // 可选：上传到后端
-      if (SUBMIT_ENDPOINT) {
-        try {
-          await fetch(SUBMIT_ENDPOINT, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-        } catch (err) {
-          console.warn("Upload failed:", err);
-        }
+      try {
+        const ack = await submitToAppsScriptWithAck(payload);
+        console.log("ACK =", ack);
+        alert("提交成功，感谢参与！");
+        // window.location.href = "thanks.html";
+      } catch (err) {
+        console.error(err);
+        alert("提交失败或超时，请检查网络后重试。");
+        submitBtn.disabled = false;
       }
-
-      // 无后端时：下载 JSON（用于本地收集/调试）
-      downloadJSON(payload);
-      alert("提交成功（已下载JSON；同时控制台与页面下方也显示了数据）。");
     });
   </script>
 </body>
