@@ -224,6 +224,29 @@
       padding: 2px 4px;
       border-radius: 4px;
     }
+
+    /* ✅ 下一步按钮区 */
+    .next-wrapper{
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .next-hint{
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .next-btn{
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #111827;
+      color: #ffffff;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -286,8 +309,7 @@
       <!-- 右侧：固定 AI 摘要（中等长度，无交互控件） -->
       <div class="card">
         <div class="card-header">
-          <span>AI 评论摘要
-          </span>
+          <span>AI 评论摘要</span>
         </div>
 
         <div class="summary-box" id="summaryText">
@@ -310,6 +332,12 @@
 
     <div class="footer-note">
       实验提示：本页面为<strong>非交互版本</strong>，仅展示固定的“中等长度”AI 评论摘要；不记录交互日志。
+    </div>
+
+    <!-- ✅ 下一步：进入 survey.html -->
+    <div class="next-wrapper">
+      <div class="next-hint">阅读完成后，请点击“下一步”进入问卷。</div>
+      <button class="next-btn" id="nextBtn">下一步</button>
     </div>
   </div>
 
@@ -342,6 +370,35 @@
 
     // 启动倒计时（这里 10 秒演示；正式实验可改为 180/300 等）
     startCountdown(10);
+  </script>
+
+  <script>
+    // ========== 下一步：保存状态并进入 survey.html ==========
+    const nextBtn = document.getElementById("nextBtn");
+
+    // 非交互页：无交互日志
+    const interactionLog = [];
+
+    // 供 survey.html 读取的“实验状态/条件”
+    const finalState = {
+      condition: "STATIC_PROMO",
+      interactive: false,
+      promo: true,
+      lengthLevel: 2,
+      selectedDimensions: ["quality", "battery", "comfort", "design", "service"]
+    };
+
+    nextBtn.addEventListener("click", () => {
+      // 可选：记录结束时间
+      sessionStorage.setItem("task_end_ts", new Date().toISOString());
+
+      // 保存数据给 survey.html
+      sessionStorage.setItem("interactionLog", JSON.stringify(interactionLog));
+      sessionStorage.setItem("final_state", JSON.stringify(finalState));
+
+      // 跳转到统一问卷页（确保同目录下存在 survey.html）
+      window.location.href = "survey.html";
+    });
   </script>
 </body>
 </html>
