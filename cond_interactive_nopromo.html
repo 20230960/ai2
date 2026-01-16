@@ -559,8 +559,25 @@
     if (nextBtn) {
      nextBtn.addEventListener("click", () => {
   if (!hasInteracted) return;
+
+  // ✅ 保存交互日志到 sessionStorage，让 survey.html 能读取
+  sessionStorage.setItem("interactionLog", JSON.stringify(window.interactionLog || []));
+
+  // ✅ 保存最终状态（可选但强烈建议）
+  sessionStorage.setItem("final_state", JSON.stringify({
+    condition: "INTERACTIVE_NOPROMO",   // 你按实际条件改
+    interactive: true,
+    promo: false,
+    lengthLevel: state.lengthLevel,
+    selectedDimensions: Array.from(state.selectedDimensions)
+  }));
+
+  // ✅ 记录结束时间（可选）
+  sessionStorage.setItem("task_end_ts", new Date().toISOString());
+
   window.location.href = "survey.html";
 });
+
 
 
     }
