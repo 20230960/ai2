@@ -30,9 +30,9 @@
   const existingCond = sessionStorage.getItem("exp_condition");
   const existingUrl  = sessionStorage.getItem("exp_condition_url");
 
-  if (existingCond && existingUrl) {
-    window.location.replace(existingUrl);
-  } else {
+  // if (existingCond && existingUrl) {
+  //   window.location.replace(existingUrl);
+  // } else {
     const picked = pickRandom(CONDITIONS);
 
     sessionStorage.setItem("participant_id", genPid());
