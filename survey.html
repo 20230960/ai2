@@ -107,15 +107,20 @@
               <div class="radio-row">
                 <label><input type="radio" name="gender" value="male" required> 男</label>
                 <label><input type="radio" name="gender" value="female" required> 女</label>
-                <label><input type="radio" name="gender" value="other" required> 其他/不便说明</label>
+                
               </div>
             </div>
 
             <!-- 年龄 -->
             <div class="field">
               <label for="age">年龄</label>
-              <input id="age" name="age" type="number" min="16" max="99" step="1" required placeholder="例如：24">
-              <div class="hint">请输入你的实际年龄（16–99）。</div>
+              <div class="radio-row">
+                <label><input type="radio" name="age" value="18-25" required> 18-25</label>
+                <label><input type="radio" name="age" value="26-35" required> 26-35</label>
+                <label><input type="radio" name="age" value="36-45" required> 36-45</label>
+                <label><input type="radio" name="age" value="46-55" required> 46-55</label>
+                
+              </div>
             </div>
 
             <!-- 最高学历 -->
@@ -134,14 +139,14 @@
 
             <!-- 购物时间 -->
             <div class="field">
-              <label for="shop_time">日常网购决策/浏览时长</label>
+              <label for="shop_time">使用在线购物平台的时长（年）</label>
               <select id="shop_time" name="shopping_time" required>
                 <option value="" disabled selected>请选择</option>
-                <option value="lt5">5 分钟以内</option>
-                <option value="5_10">5–10 分钟</option>
-                <option value="11_20">11–20 分钟</option>
-                <option value="21_30">21–30 分钟</option>
-                <option value="gt30">30 分钟以上</option>
+                <option value="2">2 年以内</option>
+                <option value="2-4">2-4 年</option>
+                <option value="4-6">4-6 年</option>
+                <option value="6-8">6-8 年</option>
+                <option value="8">8 年以上</option>
               </select>
               <div class="hint">指你在类似商品上通常用于查看信息、比较、做决定的时间。</div>
             </div>
