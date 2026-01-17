@@ -375,29 +375,31 @@
 
     // ✅ 发送到 Apps Script：sendBeacon 优先，fetch(no-cors) 兜底
     async function postToAppsScript(payload) {
-      const body = JSON.stringify(payload);
+  // 用 form-urlencoded 传：data=<json>
+  const body = "data=" + encodeURIComponent(JSON.stringify(payload));
 
-      // 1) sendBeacon：最稳（页面关闭/跳转也不容易丢）
-      try {
-        const blob = new Blob([body], { type: "application/json" });
-        const ok = navigator.sendBeacon(SUBMIT_ENDPOINT, blob);
-        if (ok) return { ok: true, method: "beacon" };
-      } catch (e) {}
+  // 1) 优先 sendBeacon（稳定）
+  try {
+    const blob = new Blob([body], { type: "application/x-www-form-urlencoded;charset=UTF-8" });
+    const ok = navigator.sendBeacon(SUBMIT_ENDPOINT, blob);
+    if (ok) return { ok: true, method: "beacon-urlencoded" };
+  } catch (e) {}
 
-      // 2) fetch no-cors：避免 CORS 报错，但读不到返回体
-      try {
-        await fetch(SUBMIT_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body,
-          mode: "no-cors",
-          keepalive: true
-        });
-        return { ok: true, method: "fetch-no-cors" };
-      } catch (err) {
-        return { ok: false, error: String(err) };
-      }
-    }
+  // 2) 兜底 fetch no-cors（不会阻塞；仍然可到达 Apps Script）
+  try {
+    await fetch(SUBMIT_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body,
+      mode: "no-cors",
+      keepalive: true
+    });
+    return { ok: true, method: "fetch-urlencoded-no-cors" };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
 
     renderSurvey();
 
