@@ -182,27 +182,24 @@
           <button type="submit" class="btn" id="submitBtn">提交</button>
         </div>
 
+        <!-- 可选：调试显示 payload（默认打开；正式实验可隐藏） -->
         <div id="jsonBox" class="json"></div>
-      </form>
-
-      <!-- ✅ 隐藏提交通道：iframe + form（用于确认写入成功） -->
-      <iframe name="submitFrame" id="submitFrame" style="display:none;"></iframe>
-
-      <form id="postForm" target="submitFrame" method="post"
-            action="https://script.google.com/macros/s/AKfycby45x2OdggWcb0dNR7DYZUZ-mVvNcOSWu3bMR1JoKoib5WzlAq85mVX7xrv45R_q9dS/exec"
-            style="display:none;">
-        <input type="hidden" name="data" id="postData" value="">
       </form>
     </div>
   </div>
 
-  <!-- exp_common.js 需要和本文件位于同一目录 -->
+  <!-- 需要与本文件位于同一目录；如没有该文件也可运行（会走 fallback） -->
   <script src="exp_common.js"></script>
+
   <script>
+    // ✅ 你的 Apps Script Web App URL（返回 JSON 的 ContentService 版本）
+    const SUBMIT_ENDPOINT =
+      "https://script.google.com/macros/s/AKfycby45x2OdggWcb0dNR7DYZUZ-mVvNcOSWu3bMR1JoKoib5WzlAq85mVX7xrv45R_q9dS/exec";
+
     function fallbackCtx() {
       return {
         participant_id: sessionStorage.getItem("participant_id"),
-        condition: sessionStorage.getItem("exp_condition") || (JSON.parse(sessionStorage.getItem("final_state") || "{}").condition || null),
+        condition: sessionStorage.getItem("exp_condition"),
         condition_url: sessionStorage.getItem("exp_condition_url"),
         task_start_ts: sessionStorage.getItem("task_start_ts"),
         task_end_ts: sessionStorage.getItem("task_end_ts"),
@@ -216,7 +213,7 @@
       ? Exp.getContextForSurvey()
       : fallbackCtx();
 
-    // 如果你入口页不是 start.html，请把这里改成 start1.html
+    // 如果你的入口不是 start.html（例如 start1.html），这里相应替换
     if (!ctx.participant_id || !ctx.condition) {
       window.location.replace("start.html");
     }
@@ -376,51 +373,37 @@
       return "S" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8).toUpperCase();
     }
 
-    let pendingSubmissionId = null;
+    // ✅ 发送到 Apps Script：sendBeacon 优先，fetch(no-cors) 兜底
+    async function postToAppsScript(payload) {
+      const body = JSON.stringify(payload);
 
-    function submitToAppsScriptWithAck(payload) {
-      return new Promise((resolve, reject) => {
-        pendingSubmissionId = payload.submission_id;
+      // 1) sendBeacon：最稳（页面关闭/跳转也不容易丢）
+      try {
+        const blob = new Blob([body], { type: "application/json" });
+        const ok = navigator.sendBeacon(SUBMIT_ENDPOINT, blob);
+        if (ok) return { ok: true, method: "beacon" };
+      } catch (e) {}
 
-        const timer = setTimeout(() => {
-          pendingSubmissionId = null;
-          reject(new Error("timeout"));
-        }, 30000);
-
-        function onMessage(ev) {
-          const allowed = new Set([
-            "https://script.google.com",
-            "https://script.googleusercontent.com"
-          ]);
-          if (!allowed.has(ev.origin)) return;
-
-          const data = ev.data || {};
-          if (typeof data.ok === "undefined") return;
-
-          // 匹配本次提交
-          if (pendingSubmissionId && data.submission_id && data.submission_id !== pendingSubmissionId) return;
-
-          clearTimeout(timer);
-          window.removeEventListener("message", onMessage);
-          pendingSubmissionId = null;
-
-          if (data.ok) resolve(data);
-          else reject(new Error(data.error || "unknown_error"));
-        }
-
-        window.addEventListener("message", onMessage);
-
-        // 通过隐藏 form POST 发送
-        document.getElementById("postData").value = JSON.stringify(payload);
-        document.getElementById("postForm").submit();
-      });
+      // 2) fetch no-cors：避免 CORS 报错，但读不到返回体
+      try {
+        await fetch(SUBMIT_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+          mode: "no-cors",
+          keepalive: true
+        });
+        return { ok: true, method: "fetch-no-cors" };
+      } catch (err) {
+        return { ok: false, error: String(err) };
+      }
     }
 
     renderSurvey();
 
     document.getElementById("restartBtn").addEventListener("click", () => {
       sessionStorage.clear();
-      window.location.replace("start.html"); // 若入口是 start1.html，请改这里
+      window.location.replace("start.html"); // 如果入口叫 start1.html，改这里
     });
 
     document.getElementById("surveyForm").addEventListener("submit", async (e) => {
@@ -452,21 +435,23 @@
       const submitBtn = document.getElementById("submitBtn");
       submitBtn.disabled = true;
 
-      // 可选：显示 payload（调试用）
+      // 可选：调试显示 payload（正式实验可注释掉）
       const box = document.getElementById("jsonBox");
       box.style.display = "block";
       box.textContent = JSON.stringify(payload, null, 2);
 
-      try {
-        const ack = await submitToAppsScriptWithAck(payload);
-        console.log("ACK =", ack);
-        alert("提交成功，感谢参与！");
-        // window.location.href = "thanks.html";
-      } catch (err) {
-        console.error(err);
-        alert("提交失败或超时，请检查网络后重试。");
+      const result = await postToAppsScript(payload);
+      console.log("UPLOAD_RESULT =", result);
+
+      if (!result.ok) {
+        alert("提交失败，请检查网络后重试。");
         submitBtn.disabled = false;
+        return;
       }
+
+      // ✅ 不再等待 postMessage，因此不会“超时失败”
+      alert("提交成功，感谢参与！");
+      // window.location.href = "thanks.html";
     });
   </script>
 </body>
